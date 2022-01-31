@@ -16,7 +16,6 @@
         </div>
 		<script>
 			validate()
-			setInterval(validate, 3600)
 			async function validate() {
 				const token = localStorage.getItem('token')
 				const result = await fetch('/api/reval', {
