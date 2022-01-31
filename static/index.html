@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login System</title>
+	</head>
+	<body>
+		<h1>Welome</h1>
+        <div>
+            <a href="/login.html" id="login">Login</a> 
+        </div>
+        <p>or</p>
+        <div>
+            <a href="/register.html" id="Signup">Sign up</a>
+        </div>
+		<script>
+			validate()
+			setInterval(validate, 3600)
+			async function validate() {
+				const token = localStorage.getItem('token')
+				const result = await fetch('/api/reval', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						token: token
+					})
+				}).then((res) => res.json())
+				
+				if (result.status === 'ok') {
+					// everythign went fine
+					const user=document.getElementById('login')
+					const logout=document.getElementById('Signup')
+					user.innerHTML="Change Password"
+					user.setAttribute('href', '/changepassword.html')
+					logout.innerHTML="Logout"
+					logout.setAttribute('href', "/logout.html")
+				} else {
+					localStorage.setItem('token', '')
+					const user=document.getElementById('login')
+					const logout=document.getElementById('Signup')
+					user.innerHTML="Login"
+					user.setAttribute('href', '/login.html')
+					logout.innerHTML="Sign Up"
+					logout.setAttribute('href', "/register.html")
+				}
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login</title>
+	</head>
+	<body>
+		<h1>Login</h1>
+		<form id="login">
+			<div>
+				E-mail: <input type="text" autocomplete="off" id="email"/>
+			</div>
+			<div>
+				Password: <input type="password" autocomplete="off" id="password"/>
+			</div>
+			<div>
+				<input type="submit" value="Submit"/>
+			</div>
+		</form>
+
+		<script>
+			
+			validate()
+			async function validate() {
+				const token = localStorage.getItem('token')
+				const result = await fetch('/api/reval', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						token: token
+					})
+				}).then((res) => res.json())
+				
+				if (result.status === 'ok') {
+					// everythign went fine
+					alert('Already Logged In')
+					window.location="/"
+				} else {
+					localStorage.setItem('token', '')
+				}
+			}
+			
+			const form = document.getElementById('login')
+			form.addEventListener('submit', login)
+
+			async function login(event) {
+				event.preventDefault()
+				const email = document.getElementById('email').value
+				const password = document.getElementById('password').value
+
+				const result = await fetch('/api/login', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						email,
+						password
+					})
+				}).then((res) => res.json())
+
+				if (result.status === 'ok') {
+					// everythign went fine
+					console.log('Got the token: ', result.data)                    
+                    localStorage.setItem('token', result.data)
+					alert('Success')
+                    window.location="/"
+				} else {
+					alert(result.error)
+				}
+			}
+		</script>
+	</body>
+</html>

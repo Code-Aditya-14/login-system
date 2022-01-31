@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Sign Up</title>
+	</head>
+	<body>
+		<h1>Registration</h1>
+		<form id="reg-form">
+            <div>
+			    Name: <input type="text" autocomplete="off" id="name"/>
+            </div>
+            <div>
+                Email: <input type="email" autocomplete="off" id="email"/>
+            </div>
+			<div>
+                Password: <input type="password" autocomplete="off" id="password"/>
+            </div>
+            <div>
+                Confirm Password: <input type="password" autocomplete="off" id="cpassword"/>
+            </div>
+			<div>
+				<input type="submit" value="Submit"/>
+			</div>
+		</form>
+
+		<script>
+			validate()
+			async function validate() {
+				const token = localStorage.getItem('token')
+				const result = await fetch('/api/reval', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						token: token
+					})
+				}).then((res) => res.json())
+				
+				if (result.status === 'ok') {
+					// everythign went fine
+					alert('Already Logged In')
+					window.location="/"
+				} else {
+					localStorage.setItem('token', '')
+				}
+			}
+
+			const form = document.getElementById('reg-form')
+			form.addEventListener('submit', registerUser)
+
+			async function registerUser(event) {
+				event.preventDefault()
+				const name = document.getElementById('name').value
+                const email = document.getElementById('email').value
+				const password = document.getElementById('password').value
+                const cpassword = document.getElementById('cpassword').value
+
+				const result = await fetch('/api/register', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						name,
+                        email,
+						password, 
+                        cpassword
+					})
+				}).then((res) => res.json())
+
+				if (result.status === 'ok') {
+					// everythign went fine
+					console.log('Got the token: ', result.data)  
+					localStorage.setItem('token', result.data)
+					alert('Success')
+                    window.location="/"
+				} else {
+					alert(result.error)
+				}
+			}
+		</script>
+	</body>
+</html>
