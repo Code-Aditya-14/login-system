@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logout</title>
+    <title>Delete Account</title>
 </head>
 <body>
     <script>
@@ -23,14 +23,37 @@
             
             if (result.status === 'ok') {
                 // everythign went fine
-                localStorage.setItem('token', '')
-                localStorage.setItem('name', '')
-                window.location="/"
+                location.replace("/")
             } else {
-                alert('Need to login to access this page')
                 localStorage.setItem('token', '')
                 localStorage.setItem('name', '')
-                window.location="/"
+            }
+        }
+        const name = window.location.pathname
+        var code = name.substring(8)
+        var url1='/api/delete/'
+        url1+=code
+        delAcc()
+        async function delAcc() {
+            const result = await fetch(url1, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: localStorage.getItem('token')
+                })
+            }).then((res) => res.json())
+            if(result.status === 'ok')
+            {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+                window.location='/logout'
+            }
+            else
+            {
+                alert('Invalid Deletion code')
+                window.location='/'
             }
         }
     </script>

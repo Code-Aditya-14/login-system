@@ -14,6 +14,14 @@ const UserSchema = new mongoose.Schema(
 		password: { 
 			type: String, 
 			required: true 
+		},
+		status: {
+			type: String, 
+			enum: ['Pending', 'Active'],
+			default: 'Pending'
+		},
+		code: {
+			type: String
 		}
 	},
 	{ 

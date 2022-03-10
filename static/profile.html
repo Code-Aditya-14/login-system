@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li style="float:right"><a href="/logout" id="Signup-nav">Logout</a></li>
+        <li style="float:right"><a href="/profile.html" id="login-nav"></a></li>
+    </ul>
+    <div class="container">
+        <h1>Profile</h1>
+        <div class="box" style="font-size: 20px;">Name: <span id="name"></span></div>
+        <div class="box" style="font-size: 20px;">E-Mail: <span id="email"></span></div>
+        <button class="btn" onclick="update()">Update Profile</button>
+        <button class="btn dbtn" onclick="delAcc()" style="float: right;">Delete</button>
+    </div>
+    <footer>
+        <div>&copy; Login System 2022</div>
+    </footer>
+    <script>
+        validate()
+        document.getElementById('login-nav').innerHTML=localStorage.getItem('name')
+        async function validate() {
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/reval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            }).then((res) => res.json())
+            if (result.status === 'ok') {
+                // everythign went fine
+                const user=document.getElementById('login-nav')
+                const logout=document.getElementById('Signup-nav')
+                user.innerHTML=localStorage.getItem('name')
+                user.setAttribute('href', '/profile')
+                logout.innerHTML="Logout"
+                logout.setAttribute('href', "/logout")
+            } else {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+                location.replace('/')
+            }
+        }
+        function update()
+        {
+            location.replace('/update')
+        }
+        getDetails()
+        async function getDetails() 
+        {
+            const result = await fetch('/api/getdetails', {
+                method : 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: localStorage.getItem('token')
+                })
+            }).then((res) => res.json())
+            if(result.status==='ok') {
+                document.getElementById('name').innerHTML=result.name
+                document.getElementById('email').innerHTML=result.email
+            }
+            else {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+                location.replace('/')
+            }
+        }
+        async function delAcc() {
+            if(confirm('Are you sure to delete the account. Once deleted you will not be able to get it back')) {
+                const result = await fetch('/api/delete', {
+                    method : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: localStorage.getItem('token')
+                    })
+                }).then((res) => res.json())
+                if(result.status === 'ok')
+                {
+                    alert('An link had been sent to the registered E-mail to delete the account')
+                }
+            }
+            else {
+                location.replace('/profile')
+            }
+        }
+    </script>
+</body>
+</html>

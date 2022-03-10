@@ -4,27 +4,44 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Sign Up</title>
+		<link rel="stylesheet" href="styles/style.css">
 	</head>
 	<body>
-		<h1>Registration</h1>
-		<form id="reg-form">
-            <div>
-			    Name: <input type="text" autocomplete="off" id="name"/>
-            </div>
-            <div>
-                Email: <input type="email" autocomplete="off" id="email"/>
-            </div>
-			<div>
-                Password: <input type="password" autocomplete="off" id="password"/>
-            </div>
-            <div>
-                Confirm Password: <input type="password" autocomplete="off" id="cpassword"/>
-            </div>
-			<div>
-				<input type="submit" value="Submit"/>
-			</div>
-		</form>
-
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li style="float:right"><a href="/signup" id="Signup-nav">Sign up</a></li>
+			<li style="float:right"><a href="/login" id="login-nav">Login</a></li>
+		</ul>
+		<div class="container">
+			<h1>Registration</h1>
+			<form id="reg-form">
+				<div class="box">
+					<span class="holder">Name:</span><br><input type="text" autocomplete="off" id="name"/>
+				</div>
+				<span class="warning" id="0"></span>
+				<div class="box">
+					<span class="holder">Email:</span><br><input type="email" autocomplete="off" id="email"/>
+				</div>
+				<span class="warning" id="1"></span>
+				<div class="box">
+					<span class="holder">Password:</span><br><input type="password" autocomplete="off" id="password"/>
+				</div>
+				<span class="warning" id="2"></span>
+				<div class="box">
+					<span class="holder">Confirm Password:</span><br><input type="password" autocomplete="off" id="cpassword"/>
+				</div>
+				<span class="warning" id="3"></span>
+				<div>
+					<input class="btn" type="submit" value="Submit"/>
+				</div>
+				<div id="msg">
+					<a href="/resendconfirmation">Resend Confirmation</a>
+				</div>
+				<div>
+					<p>Already have a Account? <a href="/login">Login</a></p>
+				</div>
+			</form>
+		</div>
 		<script>
 			validate()
 			async function validate() {
@@ -42,9 +59,10 @@
 				if (result.status === 'ok') {
 					// everythign went fine
 					alert('Already Logged In')
-					window.location="/"
+					window.location='/'
 				} else {
 					localStorage.setItem('token', '')
+                	localStorage.setItem('name', '')
 				}
 			}
 
@@ -73,12 +91,25 @@
 
 				if (result.status === 'ok') {
 					// everythign went fine
-					console.log('Got the token: ', result.data)  
-					localStorage.setItem('token', result.data)
-					alert('Success')
-                    window.location="/"
+					alert('Success, check email for verification')
+                    window.location='/'
+				} else if(result.idx === '0') {
+					document.getElementById('name').value=''
+					document.getElementById('0').innerHTML=result.error
+				} else if(result.idx === '1') {
+					document.getElementById('email').value=''
+					document.getElementById('1').innerHTML=result.error
+				} else if(result.idx === '2') {
+					document.getElementById('password').value=''
+					document.getElementById('cpassword').value=''
+					document.getElementById('2').innerHTML=result.error
+				} else if(result.idx === '3') {
+					document.getElementById('password').value=''
+					document.getElementById('cpassword').value=''
+					document.getElementById('3').innerHTML=result.error
 				} else {
 					alert(result.error)
+					window.location='/'
 				}
 			}
 		</script>

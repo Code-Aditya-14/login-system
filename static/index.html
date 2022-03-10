@@ -2,18 +2,69 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 		<title>Login System</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			ul {
+			  list-style-type: none;
+			  margin: 0;
+			  padding: 0;
+			  overflow: hidden;
+			  background-color: #333;
+			}
+			
+			li {
+			  float: left;
+			}
+			
+			li a {
+			  display: block;
+			  color: white;
+			  text-align: center;
+			  padding: 14px 16px;
+			  text-decoration: none;
+			}
+
+			li a:hover {
+				background-color: #111;
+			}
+
+			.container {
+				text-align: center;
+				padding: 0px 23px;
+			}
+
+			footer {
+				text-align: center;
+				background-color: #333;
+				color: white;
+				position: absolute;
+				width: 100%;
+				padding-top: 10px;
+				height: 30px;
+				bottom: 0;
+			}
+		</style>			
 	</head>
 	<body>
-		<h1>Welome</h1>
-        <div>
-            <a href="/login.html" id="login">Login</a> 
-        </div>
-        <p>or</p>
-        <div>
-            <a href="/register.html" id="Signup">Sign up</a>
-        </div>
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li style="float:right"><a href="/signup" id="Signup-nav">Sign up</a></li>
+			<li style="float:right"><a href="/login" id="login-nav">Login</a></li>
+		</ul>
+		<div class="container">
+			<br>
+			<h1>Welome</h1>
+			<p>Posuere urna nec tincidunt praesent semper feugiat nibh sed. Ut consequat semper viverra nam libero justo. Praesent semper feugiat nibh sed pulvinar proin gravida. Fringilla est ullamcorper eget nulla. Risus commodo viverra maecenas accumsan lacus vel facilisis volutpat. Vitae tempus quam pellentesque nec nam aliquam sem et. Dignissim suspendisse in est ante in nibh mauris. Lacus vel facilisis volutpat est velit egestas dui id ornare. Amet luctus venenatis lectus magna fringilla urna porttitor. Orci sagittis eu volutpat odio facilisis mauris sit.</p>
+			<p>Nam aliquam sem et tortor consequat id porta nibh venenatis. Est placerat in egestas erat imperdiet sed euismod. Pulvinar elementum integer enim neque volutpat. Quisque non tellus orci ac auctor augue mauris augue. At augue eget arcu dictum varius duis at. Consectetur adipiscing elit ut aliquam. Nulla malesuada pellentesque elit eget gravida. Nulla facilisi nullam vehicula ipsum a. At augue eget arcu dictum varius duis at consectetur lorem. Ornare lectus sit amet est placerat.</p>
+		</div>
+		<footer>
+			<div>&copy; Login System 2022</div>
+		</footer>
 		<script>
 			validate()
 			async function validate() {
@@ -27,17 +78,18 @@
 						token: token
 					})
 				}).then((res) => res.json())
-				
+				console.log(result)
 				if (result.status === 'ok') {
 					// everythign went fine
-					const user=document.getElementById('login')
-					const logout=document.getElementById('Signup')
-					user.innerHTML="Change Password"
-					user.setAttribute('href', '/changepassword.html')
+					const user=document.getElementById('login-nav')
+					const logout=document.getElementById('Signup-nav')
+					user.innerHTML=localStorage.getItem('name')
+					user.setAttribute('href', '/profile')
 					logout.innerHTML="Logout"
-					logout.setAttribute('href', "/logout.html")
+					logout.setAttribute('href', "/logout")
 				} else {
 					localStorage.setItem('token', '')
+                	localStorage.setItem('name', '')
 				}
 			}
 		</script>

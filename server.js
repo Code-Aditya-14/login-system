@@ -5,15 +5,301 @@ const mongoose = require('mongoose')
 const User=require('./model/user')
 const bcrypt = require('bcryptjs')
 const jwt=require('jsonwebtoken')
-const key=require('./config')
+const config=require('./config')
+const nodemailer = require('./nodemailer.config')
 
 mongoose.connect('mongodb://localhost:27017/login-sys')
 
-const JWT_SECRET=key.JWT_SECRET
+const JWT_SECRET=config.JWT_SECRET
 
 const app = express()
 app.use('/', express.static(path.join(__dirname, 'static')))
 app.use(bodyParser.json())
+
+//routes
+app.use('/login', express.static(path.join(__dirname, 'static/login.html')))
+app.use('/signup', express.static(path.join(__dirname, 'static/register.html')))
+app.use('/logout', express.static(path.join(__dirname, 'static/logout.html')))
+app.use('/verify/:confirm', express.static(path.join(__dirname, 'static/verify.html')))
+app.use('/forgetpassword', express.static(path.join(__dirname, 'static/forget.html')))
+app.use('/recovery/:confirm', express.static(path.join(__dirname, 'static/reset.html')))
+app.use('/resendconfirmation', express.static(path.join(__dirname, 'static/resendconf.html')))
+app.use('/profile', express.static(path.join(__dirname, 'static/profile.html')))
+app.use('/update', express.static(path.join(__dirname, 'static/update.html')))
+app.use('/delete/:code', express.static(path.join(__dirname, 'static/delet.html')))
+
+function generateCode(len) 
+{
+	const val= "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
+	var code=""
+	for(var i=0; i<len; i++)
+	{
+		code+=val[Math.floor(Math.random() * val.length )];
+	}
+	return code;
+}
+
+app.post('/api/getdetails', async (req, res) => {
+	const token = req.body.token
+	try {
+		const user = jwt.verify(token, JWT_SECRET)
+		const _user = await User.findOne({email: user.email})
+		res.json({ status: 'ok', name: _user.name, email: _user.email })
+	} catch {
+		res.json({ status: 'error', error: 'An unknown error occured' })
+	}
+})
+
+app.post('/api/update', async (req, res) => {
+	try {
+		const token = req.body.token
+		const name = req.body.name
+		const email = req.body.email
+		const opassword = req.body.opassword
+		const npassword = req.body.npassword
+		const cpassword = req.body.cpassword
+		let newName = req.body.oldName
+		const user = jwt.verify(token, JWT_SECRET)
+		const _id = user.id
+		const _user = await User.findOne({ _id })
+		if(npassword!==cpassword) {
+			return res.json({ status: 'failed', idx: '3', error: 'New password and confirm password are different' })
+		}
+		if(opassword && await bcrypt.compare(opassword, _user.password)) {
+			if(name && typeof name === 'string')
+			{
+				await User.updateOne(
+					{ _id },
+					{
+						$set: { name: name }
+					}
+				)
+				newName = name
+			}
+			if(npassword && typeof npassword === 'string')
+			{
+				if(npassword.length < 6)
+				{
+					return res.json({ 
+						status: 'failed', 
+						idx: '3', 
+						error: 'Password too small. Should be atleast 6 characters' 
+					})
+				}
+				const password = await bcrypt.hash(npassword, 10)
+
+				await User.updateOne(
+					{ _id },
+					{
+						$set: { password : password }
+					}
+				)
+			}
+			if(email && typeof email === 'string')
+			{
+				const ouser = await User.findOne({ email })
+				if(!ouser) {
+					const code = generateCode(20)
+					await User.updateOne(
+						{ _id },
+						{
+							$set: {
+								email: email,
+								code: code,
+								status: 'Pending'
+							}
+						}
+					)
+					nodemailer.confirmationEmail(_user.name, email, code)
+					return res.json({ status : 'ok', logout : 'true', name : newName })
+				}
+				else {
+					return res.json({ status: 'failed', idx: '1', error: 'Email already in use' })
+				}
+			}
+			res.json({ status : 'ok', logout : 'false', name : newName })
+		}
+		else {
+			return res.json({ status: 'failed', idx: '2', error: 'Incorrect password' })
+		}
+	} catch(err) {
+		console.log(err)
+		res.json({ status : 'failed', idx : '5', error : 'An unknown error occured' })
+	}
+})
+
+app.post('/api/delete', async (req, res) => {
+	try {
+		const code = generateCode(15)
+		const token = req.body.token
+		const user = jwt.verify(token, JWT_SECRET)
+		const _id = user.id
+		const _user = await User.findOne({ _id })
+		await User.updateOne(
+			{ _id },
+			{
+				$set : {
+					code
+				}
+			}
+		)
+		nodemailer.deleteAcc(_user.name, _user.email, code)
+		console.log(code)
+		res.json({ status : 'ok' })
+	} catch (err) {
+		res.json({ status : 'failed' })
+	}
+})
+
+app.post('/api/delete/:code', async (req, res) => {
+	try {
+		const code = req.params.code
+		console.log(code)
+		const user = await User.findOne({ code : code })
+		if(!user) {
+			return res.json({ status : 'failed', error : 'Invalid deletion code' }) 
+		}
+		await User.deleteOne(
+			{code : code}
+		)
+		res.json({ status : 'ok' })
+	} catch (err) {
+		res.json({ status : 'failed' })
+	}
+})
+
+app.post('/api/verify/:confirm', async (req, res) => {
+	try {
+		const code=req.params.confirm
+		await User.updateOne(
+			{
+				code,
+				status : 'Pending'
+			},
+			{
+				$set:{
+					status: 'Active',
+					code : ''
+				}
+			}
+		)
+		res.json({status: 'ok'})
+	} catch (error) {
+		console.log(error)
+		res.json({ status: 'failed' , error: 'An unknown error occured'})
+	}
+})
+
+app.post('/api/confirm/:code', async (req, res) => {
+	var code=req.params.code
+	console.log(code)
+	const user=await User.findOne({code})
+	if(!user)
+	{
+		return res.json({ status : 'failed', error : 'Invalid confirmation code' })
+	}
+	res.json({ status: 'ok' })
+})
+
+app.post('/api/recoverpass/:confirm', async (req, res) => {
+	const code = req.params.confirm
+	const { newpassword: plainTextPassword, cpassword: cpassword } = req.body
+	if (!plainTextPassword || typeof plainTextPassword !== 'string') {
+		return res.json({ status: 'error', idx: '0', error: 'Invalid password format' })
+	}
+
+	if (plainTextPassword.length < 6) {
+		return res.json({
+			status: 'error',
+			idx: '0',
+			error: 'Password too small. Should be atleast 6 characters'
+		})
+	}
+
+	if(plainTextPassword!==cpassword)
+	{
+		return res.json({
+			status: 'failed', 
+			idx: '1',
+			error: 'password and confirm password did not match'
+		})
+	}
+	try {
+		const password = await bcrypt.hash(plainTextPassword, 10)
+		console.log(code)
+		await User.updateOne(
+			{
+				code
+			},
+			{
+				$set:{
+					password : password,
+					code : ''
+				}
+			}
+		)
+		res.json({status: 'ok'})
+	} catch (error) {
+		console.log(error)
+		res.json({ status: 'failed' , idx: '2', error: 'An unknown error occured'})
+	}
+})
+
+app.post('/api/resetmail', async (req, res) => {
+	const code = generateCode(18);
+	const email = req.body.email
+	const user = await User.findOne({email})
+	if(!user)
+	{
+		return res.json({ status: 'failed', idx: '0', error: 'Email not register. Please sign up.' })
+	}
+	try {
+		await User.updateOne(
+			{
+				email
+			},
+			{
+				$set:{
+					code : code
+				}
+			}
+		)
+		nodemailer.passwordReset(user.name, user.email, code)
+		res.json({status: 'ok'})
+	} catch (err) {
+		res.json({ status:'failed', idx : '1', error:'An unknown error occured' })
+	}
+})
+
+app.post('/api/resendmail', async (req, res) => {
+	const code = generateCode(20);
+	const email = req.body.email
+	const user = await User.findOne({ email })
+	if(!user)
+	{
+		return res.json({ status: 'failed', idx: '0', error: 'No user found' })
+	}
+	if(user.status==='Active')
+	{
+		return res.json({ status: 'failed', idx: '1', error: 'User is already verified> You can login now.' })
+	}
+	try {
+		await User.updateOne(
+			{
+				email
+			},
+			{
+				$set:{
+					code : code
+				}
+			}
+		)
+		nodemailer.confirmationEmail(user.name, user.email, code)
+		res.json({status: 'ok'})
+	} catch (err) {
+		res.json({ status:'failed', idx: '1', error:'An unknown error occured' })
+	}
+})
 
 app.post('/api/reval', async (req, res) => {
 	const token = req.body.token
@@ -21,18 +307,21 @@ app.post('/api/reval', async (req, res) => {
 		const user = jwt.verify(token, JWT_SECRET)
 		res.json({ status: 'ok' })
 	} catch {
-		res.json({ status: 'error', error: ';))' })
+		res.json({ status: 'error', error: 'An unknown error occured' })
 	}
 })
 
 app.post('/api/login', async (req, res) => {
 	const { email, password } = req.body
 	const user = await User.findOne({ email }).lean()
-
 	if (!user) {
-		return res.json({ status: 'error', error: 'Invalid email/password' })
+		return res.json({ status: 'error', idx: '0', error: 'Invalid email/password' })
 	}
-
+	if(user.status==='Pending')
+	{
+		return res.json({ status: 'error', idx:'2', error: 'Email is not verified yet. Please check mail or request again for verification.' })
+	}
+	
 	if (await bcrypt.compare(password, user.password)) {
 		// the email, password combination is successful
 		
@@ -46,103 +335,65 @@ app.post('/api/login', async (req, res) => {
 			  expiresIn: 3600,
 			},
 		)
-		return res.json({ status: 'ok', data: token})
+		const name= user.name
+		return res.json({ status: 'ok', data: token, name: name})
 	}
-	res.json({ status: 'error', error: 'Invalid email/password' })
-})
-
-app.post('/api/change', async (req, res) => {
-	const { token, newpassword: plainTextPassword } = req.body
-	console.log(token)
-
-	if (!plainTextPassword || typeof plainTextPassword !== 'string') {
-		return res.json({ status: 'error', error: 'Invalid password' })
-	}
-
-	if (plainTextPassword.length < 5) {
-		return res.json({
-			status: 'error',
-			error: 'Password too small. Should be atleast 6 characters'
-		})
-	}
-
-	try {
-		const user = jwt.verify(token, JWT_SECRET)
-
-		const _id = user.id
-
-		const password = await bcrypt.hash(plainTextPassword, 10)
-
-		await User.updateOne(
-			{ _id },
-			{
-				$set: { password }
-			}
-		)
-		res.json({ status: 'ok' })
-	} catch (error) {
-		console.log(error)
-		res.json({ status: 'error', error: ';))' })
-	}
+	res.json({ status: 'error', idx: '0', error: 'Invalid email/password' })
 })
 
 app.post('/api/register', async (req, res) => {
     const { name, email, password: plainTextPassword, password: cpassword } = req.body
 
 	if (!name || typeof name !== 'string') {
-		return res.json({ status: 'error', error: 'Invalid name' })
+		return res.json({ status: 'error', idx: '0', error: 'Invalid name' })
 	}
 
     if (!email || typeof email !== 'string') {
-		return res.json({ status: 'error', error: 'Invalid email' })
+		return res.json({ status: 'error', idx: '1', error: 'Invalid email' })
 	}
 
 	if (!plainTextPassword || typeof plainTextPassword !== 'string') {
-		return res.json({ status: 'error', error: 'Invalid password' })
+		return res.json({ status: 'error', idx: '2', error: 'Invalid password' })
 	}
 
     if(req.body.password!==req.body.cpassword)
     {
-        return res.json({status: 'failed', error: 'password and confirm password did not match'})
+        return res.json({status: 'failed', idx: '3', error: 'password and confirm password did not match'})
     }
 
-	if (plainTextPassword.length < 5) {
+	if (plainTextPassword.length < 6) {
 		return res.json({
 			status: 'error',
+			idx: '2',
 			error: 'Password too small. Should be atleast 6 characters'
 		})
 	}
 
 	const password = await bcrypt.hash(plainTextPassword, 10)
     try {
+		const code = generateCode(20)
         const response = await User.create({
             name,
             email, 
-            password
+            password,
+			code
         })
-		const token = jwt.sign(
-			{
-				id: response._id,
-				email: response.email
-			},
-			JWT_SECRET,
-			{
-			  expiresIn: 3600, 
-			},
-		)
-		console.log('User created successfully: ', response, token)
-		return res.json({status: 'ok', data: token})
+		console.log('User created successfully: ', response)
+		nodemailer.confirmationEmail(response.name, response.email, response.code);
+		return res.json({status: 'ok', message: 'Please check email for email confirmation'})
     } catch (error) {
         if (error.code === 11000) {
 			// duplicate key
-			return res.json({ status: 'error', error: 'Email already in use' })
+			return res.json({ status: 'error', idx : '1', error: 'Email already in use' })
 		}
-		throw error
+		else {
+			return res.json({ status: 'error', idx : '4', error: 'An unknown error occured' })
+		}
     }
 })
 
 var port=process.env.PORT || 3000
 
 app.listen(port, ()=> {
-    console.log('server at ', port)
+    console.log(`server at ${port}`)
 })

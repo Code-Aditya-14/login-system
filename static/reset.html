@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Recovery</title>
+    <!-- <link rel="stylesheet" href="style1.css"> -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .container { 
+            padding: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: aqua;
+            border-radius: 10px;
+        }
+
+        .container h1 {
+            font-family: 'Heebo', sans-serif;
+            width: 50%;
+            display: inline-block;
+            font-size: 40px;
+            border-bottom: 5px solid purple;
+            margin-bottom: 15px;
+            padding: 13px 0;
+        }
+
+        .box{
+            width: 100%; 
+            margin: 22px 0px;
+            border-bottom: 2px solid purple;
+        }
+
+        .box input{  
+            background: none;
+            width: 75%;
+            padding: 5px 10px;
+            font-size: 20px;
+            border: none;
+            outline:none;
+        }
+
+        .box .holder {
+            font-size: 20px;
+        }
+
+        .btn{
+            cursor: pointer;
+            outline: none; 
+            margin: 12px 0;
+            padding: 10px 21px;
+            border: 2px solid purple;
+            border-radius: 10px;
+            font-size: 18px;
+            background: none;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            opacity: 0.5;
+            color: white; 
+            background: purple; 
+        }
+
+        a, p {
+            font-size: 16px;
+            padding: 2px;
+        }
+
+        .warning {
+            color: red;
+        }
+        
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        li {
+            float: left;   
+        }
+
+        li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        li a:hover {
+            background-color: #111;
+        }
+
+        footer {
+            text-align: center;
+            background-color: #333;
+            color: white;
+            position: fixed;
+            width: 100%;
+            padding: 10px;
+            top: 94vh;
+        }
+    </style>
+</head>
+<body>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li style="float:right"><a href="/signup" id="Signup-nav">Sign up</a></li>
+        <li style="float:right"><a href="/login" id="login-nav">Login</a></li>
+    </ul>
+    <div class="container">
+        <h1>Password Recovery</h1>
+        <form id="reset">
+            <div class="box">
+                <span class="holder">New Password:</span><br><input type="password" autocomplete="off" id="npassword"/>
+            </div>
+            <span class="warning" id="0"></span>
+            <div class="box">
+                <span class="holder">Confirm New Password:</span><br><input type="password" autocomplete="off" id="cpassword"/>
+            </div>
+            <span class="warning" id="1"></span>
+            <div>
+                <input class="btn" type="submit" value="Submit"/>
+            </div>
+        </form>
+    </div>
+    <footer>
+        <div>&copy; Login System 2022</div>
+    </footer>
+    <script>
+        validate()
+        async function validate() {
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/reval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            }).then((res) => res.json())
+            
+            if (result.status === 'ok') {
+                // everythign went fine
+                alert('Already Logged In')
+            } else {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+            }
+        }
+        
+        const name = window.location.pathname
+        var code = name.substring(10)
+        console.log(code)
+        var url1='/api/confirm/'
+        url1+=code
+        check()
+        async function check()
+        {
+            const result = await fetch(url1, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then((res) => res.json())
+            if(result.status!=='ok')
+            {
+                alert('Invalid passoword recovery code')
+                window.location="/"
+            }
+            console.log(result)
+        }
+        var url = '/api/recoverpass/'
+        url+=code
+        console.log(url)
+        const form = document.getElementById('reset')
+		form.addEventListener('submit', recovery)
+        async function recovery(event) {
+            event.preventDefault()
+            const password = document.getElementById('npassword').value
+            const cpassword = document.getElementById('cpassword').value
+
+            const result = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    newpassword: password,
+                    cpassword: cpassword
+                })
+            }).then((res) => res.json())
+
+            if (result.status === 'ok') {
+                // everythign went fine
+                alert('Password successfully reset. You can now login to your account.')
+                window.location="/login"
+            } else if(result.idx==='0') {
+                document.getElementById('npassword').value=''
+                document.getElementById('cpassword').value=''
+                document.getElementById('0').innerHTML=''
+                document.getElementById('1').innerHTML=''
+                document.getElementById('0').innerHTML=result.error
+            } else if(result.idx==='1') {
+                document.getElementById('npassword').value=''
+                document.getElementById('cpassword').value=''
+                document.getElementById('0').innerHTML=''
+                document.getElementById('1').innerHTML=''
+                document.getElementById('1').innerHTML=result.error
+            } else {
+                alert(result.error)
+                window.location='/'
+            }
+        }
+    </script>
+</body>
+</html>

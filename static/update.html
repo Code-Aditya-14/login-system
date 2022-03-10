@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Profile</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li style="float:right"><a href="/logout" id="Signup-nav">Logout</a></li>
+        <li style="float:right"><a href="/profile.html" id="login-nav"></a></li>
+    </ul>
+    <div class="container container-1">
+        <h1>Update Profile</h1>
+        <p class="warning">Recommended to update one by one, if you want to update multiple things.</p>
+        <form id="update">
+            <div class="box">
+                <span class="holder">Name:</span><br><input type="text" autocomplete="off" id="name"/>
+            </div>
+            <span class="warning" id="0"></span>
+            <div class="box">
+                <span class="holder">Email:</span><br><input type="email" autocomplete="off" id="email"/>
+            </div>
+            <span class="warning" id="1"></span>
+            <div class="box">
+                <span class="holder">Old Password <span class="required">*</span> : </span><br><input type="password" autocomplete="off" id="opassword" required/>
+            </div>
+            <span class="warning" id="2"></span>
+            <div class="box">
+                <span class="holder">New Password:</span><br><input type="password" autocomplete="off" id="npassword"/>
+            </div>
+            <span class="warning" id="3"></span>
+            <div class="box">
+                <span class="holder">Confirm New Password:</span><br><input type="password" autocomplete="off" id="cpassword"/>
+            </div>
+            <span class="warning" id="4"></span>
+            <div>
+                <input class="btn" type="submit" value="Save Changes"/>
+            </div>
+        </form>
+    </div>
+    <!-- <footer>
+        <div>&copy; Login System 2022</div>
+    </footer> -->
+    <script>
+        validate()
+        document.getElementById('login-nav').innerHTML=localStorage.getItem('name')
+        async function validate() {
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/reval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            }).then((res) => res.json())
+            if (result.status === 'ok') {
+                // everythign went fine
+                const user=document.getElementById('login-nav')
+                const logout=document.getElementById('Signup-nav')
+                user.innerHTML=localStorage.getItem('name')
+                user.setAttribute('href', '/profile')
+                logout.innerHTML="Logout"
+                logout.setAttribute('href', "/logout")
+            } else {
+                alert('Need to login to access this page')
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+                window.location='/'
+            }
+        }
+        const form = document.getElementById('update')
+        form.addEventListener('submit', update)
+        async function update(event) {
+            event.preventDefault()
+            const name = document.getElementById('name').value
+            const email = document.getElementById('email').value
+            const opassword = document.getElementById('opassword').value
+            const npassword = document.getElementById('npassword').value
+            const cpassword = document.getElementById('cpassword').value
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token,
+                    name: name,
+                    email: email,
+                    opassword: opassword,
+                    npassword: npassword,
+                    cpassword: cpassword,
+                    oldName : localStorage.getItem('name')
+                })
+            }).then((res) => res.json())
+            if(result.status === 'ok')
+            {
+                alert('Profile updated successfully')
+                localStorage.setItem('name', result.name)
+                if(result.logout === 'true') {
+                    window.location='/logout'
+                }
+                else { 
+                    window.location='/profile'
+                }
+            }
+            else if(result.idx === '5')
+            {
+                alert(result.error)
+                window.location='/'
+            }
+            else
+            {
+                document.getElementById('0').innerHTML=''
+                document.getElementById('1').innerHTML=''
+                document.getElementById('2').innerHTML=''
+                document.getElementById('3').innerHTML=''
+                document.getElementById('4').innerHTML=''
+                document.getElementById(result.idx).innerHTML=result.error
+                document.getElementById('name').value=''
+                document.getElementById('email').value=''
+                document.getElementById('opassword').value=''
+                document.getElementById('npassword').value=''
+                document.getElementById('cpassword').value=''
+            }
+        }
+    </script>
+</body>
+</html>

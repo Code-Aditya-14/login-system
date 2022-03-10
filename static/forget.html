@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forget Password</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li style="float:right"><a href="/signup" id="Signup">Sign up</a></li>
+        <li style="float:right"><a href="/login" id="login">Login</a></li>
+    </ul>
+    <div class="container">    
+        <h1>Forgot Password</h1>
+        <form id="forget">
+            <div class="box">
+                <span class="holder">Email:</span><br><input type="email" autocomplete="off" name="email" id="email">
+            </div>
+            <span class="warning" id="0"></span>
+            <div>
+                <input class="btn" type="submit" value="Submit"/>
+            </div>
+        </form>
+    </div>
+    <footer>
+        <div>&copy; Login System 2022</div>
+    </footer>
+    <script>
+        validate()
+        async function validate() {
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/reval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            }).then((res) => res.json())
+            
+            if (result.status === 'ok') {
+                // everythign went fine
+                location.replace("/")
+            } else {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+            }
+        }
+        const form = document.getElementById('forget')
+        form.addEventListener('submit', forget)
+
+        async function forget(event) {
+            event.preventDefault()
+            const email = document.getElementById('email').value
+
+            const result = await fetch('/api/resetmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email
+                })
+            }).then((res) => res.json())
+            if (result.status === 'ok') {
+                alert('Password recovery Email was sent')
+                window.location='/'
+            } else if(result.idx === '0') {
+                document.getElementById('email').value=''
+                document.getElementById('0').innerHTML=result.error
+            } else {
+                alert(result.error)
+                window.location='/'
+            }
+        }
+    </script>
+</body>
+</html>

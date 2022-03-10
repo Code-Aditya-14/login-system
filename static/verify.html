@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification</title>
+</head>
+<body>
+    <script>
+        validate()
+        async function validate() {
+            const token = localStorage.getItem('token')
+            const result = await fetch('/api/reval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            }).then((res) => res.json())
+            
+            if (result.status === 'ok') {
+                // everythign went fine
+                alert('Already Logged In')
+                window.location="/"
+            } else {
+                localStorage.setItem('token', '')
+                localStorage.setItem('name', '')
+            }
+        }
+        
+        const name = window.location.pathname
+        var code = name.substring(8)
+        var url1='/api/confirm/'
+        url1+=code
+        check()
+        async function check()
+        {
+            const result = await fetch(url1, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then((res) => res.json())
+            if(result.status!=='ok')
+            {
+                alert(result.error)
+                window.location='/'
+            }
+            else
+            {
+                var url = '/api/verify/'
+                url+=code
+                console.log(url)
+                verification()
+                async function verification()
+                {
+                    const result = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }).then((res) => res.json())
+                    if(result.status === 'ok')
+                    {
+                        alert('User verified successfully. Your can now login to your account.')
+                        window.location='/login'
+                    }
+                    else
+                    {
+                        alert(result.error)
+                        window.location='/'
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
