@@ -29,7 +29,7 @@ module.exports.confirmationEmail = (name, email, code) => {
         html: `<h1>Email Confirmation</h1>
         <h2>Hello ${name}</h2>
         <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-        <a href=http://localhost:3000/verify/${code}> Click here</a>
+        <a href=https://login-system-template.herokuapp.com/verify/${code}> Click here</a>
         </div>`
         
     }).catch(err => console.log(err));
@@ -42,7 +42,7 @@ module.exports.passwordReset = (name, email, code) => {
         subject: "Email for Password of Recovery",
         html: `<h2>Hello ${name}</h2>
         <p>Please click on the link to reset the password for your account.</p>
-        <a href=http://localhost:3000/recovery/${code}> Click here</a>
+        <a href=https://login-system-template.herokuapp.com/recovery/${code}> Click here</a>
         </div>`
         
     }).catch(err => console.log(err));
@@ -55,7 +55,7 @@ module.exports.deleteAcc = (name, email, code) => {
         subject: "Email for deletion of Account",
         html: `<h2>Hello ${name}</h2>
         <p>Please click on the link to delete your account from this website.</p>
-        <a href=http://localhost:3000/delete/${code}> Click here</a>
+        <a href=https://login-system-template.herokuapp.com/delete/${code}> Click here</a>
         </div>`
         
     }).catch(err => console.log(err));
