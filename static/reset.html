@@ -5,7 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Password Recovery</title>
-    <!-- <link rel="stylesheet" href="style1.css"> -->
     <style>
         * {
             margin: 0;
@@ -13,13 +12,18 @@
         }
 
         .container { 
-            padding: 30px;
+            padding: 20px;
             position: absolute;
-            top: 50%;
+            top: 53%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: aqua;
-            border-radius: 10px;
+            background-color: rgb(0, 252, 34);
+            border-radius: 0px;
+            max-width: 300px !important;
+        }
+
+        .container-1 {
+            top: 63% !important;
         }
 
         .container h1 {
@@ -56,17 +60,27 @@
             outline: none; 
             margin: 12px 0;
             padding: 10px 21px;
-            border: 2px solid purple;
+            border: 2px solid purple !important;
             border-radius: 10px;
             font-size: 18px;
             background: none;
             font-weight: bold;
         }
 
+        .dbtn {
+            border: 2px solid red !important;
+            color: red;
+        }
+
         .btn:hover {
-            opacity: 0.5;
+            opacity: 1;
             color: white; 
             background: purple; 
+        }
+
+        .dbtn:hover {
+            opacity: 1 !important;
+            background: red !important; 
         }
 
         a, p {
@@ -77,48 +91,59 @@
         .warning {
             color: red;
         }
-        
-        ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #333;
+
+        #dis {
+            display: none;
         }
 
-        li {
-            float: left;   
-        }
-
-        li a {
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 16px;
-            text-decoration: none;
-        }
-
-        li a:hover {
-            background-color: #111;
+        .required {
+            color: red;
         }
 
         footer {
             text-align: center;
             background-color: #333;
             color: white;
-            position: fixed;
+            bottom: 0px;
+            position: absolute;
             width: 100%;
-            padding: 10px;
-            top: 94vh;
+            padding-top: 10px;
+            margin-top: 10px;
+            height: 50px;
+            
+        }
+
+        .footer {
+            bottom: -150px;
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <body>
-    <ul>
-        <li><a href="/">Home</a></li>
-        <li style="float:right"><a href="/signup" id="Signup-nav">Sign up</a></li>
-        <li style="float:right"><a href="/login" id="login-nav">Login</a></li>
-    </ul>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="https://github.com/Code-Aditya-14/login-system">Github Repo</a>
+            </li>
+            </ul>
+            <ul class="navbar-nav my-2 my-lg-0">
+                <li class="nav-item my-2 my-sm-0">
+                    <a class="nav-link" href="/login" id="login-nav">Login</a>
+                </li>
+                <li class="nav-item mr-sm-2">
+                    <a class="nav-link" href="/signup" id="Signup-nav">Sign up</a>
+                </li>    
+            </ul>
+        </div>
+    </nav>
     <div class="container">
         <h1>Password Recovery</h1>
         <form id="reset">
@@ -153,7 +178,6 @@
             }).then((res) => res.json())
             
             if (result.status === 'ok') {
-                // everythign went fine
                 alert('Already Logged In')
             } else {
                 localStorage.setItem('token', '')
@@ -163,7 +187,6 @@
         
         const name = window.location.pathname
         var code = name.substring(10)
-        console.log(code)
         var url1='/api/confirm/'
         url1+=code
         check()
@@ -180,11 +203,9 @@
                 alert('Invalid passoword recovery code')
                 window.location="/"
             }
-            console.log(result)
         }
         var url = '/api/recoverpass/'
         url+=code
-        console.log(url)
         const form = document.getElementById('reset')
 		form.addEventListener('submit', recovery)
         async function recovery(event) {
@@ -204,7 +225,6 @@
             }).then((res) => res.json())
 
             if (result.status === 'ok') {
-                // everythign went fine
                 alert('Password successfully reset. You can now login to your account.')
                 window.location="/login"
             } else if(result.idx==='0') {

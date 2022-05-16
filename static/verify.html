@@ -22,7 +22,6 @@
             }).then((res) => res.json())
             
             if (result.status === 'ok') {
-                // everythign went fine
                 alert('Already Logged In')
                 window.location="/"
             } else {
@@ -53,7 +52,6 @@
             {
                 var url = '/api/verify/'
                 url+=code
-                console.log(url)
                 verification()
                 async function verification()
                 {

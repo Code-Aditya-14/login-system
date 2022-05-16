@@ -1,15 +1,24 @@
 const nodemailer = require('nodemailer')
-const config = require('./config')
+require('dotenv').config()
+const { google } = require('googleapis')
+const OAuth2 = google.auth.OAuth2;
 
-const user = config.user
-const pass = config.password
+const OAuth2_client = new OAuth2(process.env.clientId, process.env.clientSecret);
+OAuth2_client.setCredentials({ refresh_token: process.env.refreshToken })
+
+const user = process.env.user;
+const accessToken = OAuth2_client.getAccessToken();
 
 const transport = nodemailer.createTransport({
-    service: "Gmail",
+    service: "gmail",
     auth: {
+        type: 'OAuth2',
         user: user,
-        pass: pass,
-    },
+        clientId: process.env.clientId,
+        clientSecret: process.env.clientSecret,
+        refreshToken: process.env.refreshToken,
+        accessToken: accessToken
+    }
 });
 
 module.exports.confirmationEmail = (name, email, code) => {
