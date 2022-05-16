@@ -5,7 +5,6 @@ const mongoose = require('mongoose')
 const User=require('./model/user')
 const bcrypt = require('bcryptjs')
 const jwt=require('jsonwebtoken')
-const config=require('./config')
 const nodemailer = require('./nodemailer.config')
 require('dotenv').config()
 
