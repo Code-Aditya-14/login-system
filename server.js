@@ -288,29 +288,24 @@ app.post('/api/getdetails', async (req, res) => {
 //update page
 app.post('/api/update', async (req, res) => {
 	try {
-		const token = req.body.token
-		const name = req.body.name
-		const email = req.body.email
-		const opassword = req.body.opassword
-		const npassword = req.body.npassword
-		const cpassword = req.body.cpassword
+		var token = req.body.token
+		var name = req.body.name
+		var email = req.body.email
+		var opassword = req.body.opassword
+		var npassword = req.body.npassword
+		var cpassword = req.body.cpassword
 		let newName = req.body.oldName
 		const user = jwt.verify(token, JWT_SECRET)
 		const _id = user.id
 		const _user = await User.findOne({ _id })
+		var password
 		if(npassword!==cpassword) {
 			return res.json({ status: 'failed', idx: '3', error: 'New password and confirm password are different' })
 		}
 		if(opassword && await bcrypt.compare(opassword, _user.password)) {
-			if(name && typeof name === 'string')
+			if(!name && typeof name !== 'string')
 			{
-				await User.updateOne(
-					{ _id },
-					{
-						$set: { name: name }
-					}
-				)
-				newName = name
+				name = _user.name
 			}
 			if(npassword && typeof npassword === 'string')
 			{
@@ -322,14 +317,11 @@ app.post('/api/update', async (req, res) => {
 						error: 'Password too small. Should be atleast 6 characters' 
 					})
 				}
-				const password = await bcrypt.hash(npassword, 10)
-
-				await User.updateOne(
-					{ _id },
-					{
-						$set: { password : password }
-					}
-				)
+				password = await bcrypt.hash(plainTextPassword, 10)
+			}
+			else
+			{
+				password = user.password
 			}
 			if(email && typeof email === 'string')
 			{
@@ -340,20 +332,34 @@ app.post('/api/update', async (req, res) => {
 						{ _id },
 						{
 							$set: {
+								name,
+								password,
 								email: email,
 								code: code,
 								status: 'Pending'
 							}
 						}
 					)
-					nodemailer.confirmationEmail(_user.name, email, code)
-					return res.json({ status : 'ok', logout : 'true', name : newName })
+					nodemailer.confirmationEmail(name, email, code)
+					return res.json({ status : 'ok', logout : 'true', name })
 				}
 				else {
 					return res.json({ status: 'failed', idx: '1', error: 'Email already in use' })
 				}
 			}
-			res.json({ status : 'ok', logout : 'false', name : newName })
+			else
+			{
+				await User.updateOne(
+					{ _id },
+					{
+						$set: {
+							name,
+							password
+						}
+					}
+				)
+				res.json({ status : 'ok', logout : 'false', name })
+			}
 		}
 		else {
 			return res.json({ status: 'failed', idx: '2', error: 'Incorrect password' })
