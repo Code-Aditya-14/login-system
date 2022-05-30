@@ -109,7 +109,8 @@
                 }).then((res) => res.json())
                 if(result.status === 'ok')
                 {
-                    alert('An link had been sent to the registered E-mail to delete the account')
+                    alert('Email deleted successfully')
+                    window.location = '/logout'
                 }
             }
             else {

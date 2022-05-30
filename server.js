@@ -317,7 +317,7 @@ app.post('/api/update', async (req, res) => {
 						error: 'Password too small. Should be atleast 6 characters' 
 					})
 				}
-				password = await bcrypt.hash(plainTextPassword, 10)
+				password = await bcrypt.hash(opassword, 10)
 			}
 			else
 			{
@@ -378,31 +378,10 @@ app.post('/api/delete', async (req, res) => {
 		const user = jwt.verify(token, JWT_SECRET)
 		const _id = user.id
 		const _user = await User.findOne({ _id })
-		await User.updateOne(
-			{ _id },
-			{
-				$set : {
-					code
-				}
-			}
+		await User.deleteOne(
+			{ _id }
 		)
 		nodemailer.deleteAcc(_user.name, _user.email, code)
-		res.json({ status : 'ok' })
-	} catch (err) {
-		res.json({ status : 'failed' })
-	}
-})
-
-app.post('/api/delete/:code', async (req, res) => {
-	try {
-		const code = req.params.code
-		const user = await User.findOne({ code : code })
-		if(!user) {
-			return res.json({ status : 'failed', error : 'Invalid deletion code' }) 
-		}
-		await User.deleteOne(
-			{code : code}
-		)
 		res.json({ status : 'ok' })
 	} catch (err) {
 		res.json({ status : 'failed' })
